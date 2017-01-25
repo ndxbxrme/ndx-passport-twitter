@@ -8,7 +8,6 @@
     ndx.settings.TWITTER_SECRET = process.env.TWITTER_SECRET || ndx.settings.TWITTER_SECRET;
     ndx.settings.TWITTER_CALLBACK = process.env.TWITTER_CALLBACK || ndx.settings.TWITTER_CALLBACK;
     if (ndx.settings.TWITTER_KEY) {
-      console.log('hey from twitter');
       ndx.passport.use(new TwitterStrategy({
         consumerKey: ndx.settings.TWITTER_KEY,
         consumerSecret: ndx.settings.TWITTER_SECRET,
