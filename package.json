@@ -1,6 +1,6 @@
 {
   "name": "ndx-passport-twitter",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "twitter plugin for ndx-passport",
   "main": "build/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "url": "https://github.com/ndxbxrme/ndx-passport-twitter"
   },
   "author": "ndxbxrme",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ndxbxrme/ndx-passport-twitter/issues"
   },
