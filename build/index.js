@@ -1,13 +1,15 @@
 (function() {
   'use strict';
   module.exports = function(ndx) {
-    var ObjectID, TwitterStrategy;
+    var ObjectID, TwitterStrategy, scopes;
     TwitterStrategy = require('passport-twitter').Strategy;
     ObjectID = require('bson-objectid');
     ndx.settings.TWITTER_KEY = process.env.TWITTER_KEY || ndx.settings.TWITTER_KEY;
     ndx.settings.TWITTER_SECRET = process.env.TWITTER_SECRET || ndx.settings.TWITTER_SECRET;
     ndx.settings.TWITTER_CALLBACK = process.env.TWITTER_CALLBACK || ndx.settings.TWITTER_CALLBACK;
+    ndx.settings.TWITTER_SCOPE = process.env.TWITTER_SCOPE || ndx.settings.TWITTER_SCOPE || 'email';
     if (ndx.settings.TWITTER_KEY) {
+      scopes = ndx.passport.splitScopes(ndx.settings.TWITTER_SCOPE);
       ndx.passport.use(new TwitterStrategy({
         consumerKey: ndx.settings.TWITTER_KEY,
         consumerSecret: ndx.settings.TWITTER_SECRET,
@@ -59,11 +61,11 @@
         });
       }));
       ndx.app.get('/api/twitter', ndx.passport.authenticate('twitter', {
-        scope: 'email'
+        scope: scopes
       }), ndx.postAuthenticate);
       ndx.app.get('/api/twitter/callback', ndx.passport.authenticate('twitter'), ndx.postAuthenticate);
       ndx.app.get('/api/connect/twitter', ndx.passport.authorize('twitter', {
-        scope: 'email'
+        scope: scopes
       }));
       return ndx.app.get('/api/unlink/twitter', function(req, res) {
         var user;

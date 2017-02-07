@@ -6,7 +6,9 @@ module.exports = (ndx) ->
   ndx.settings.TWITTER_KEY = process.env.TWITTER_KEY or ndx.settings.TWITTER_KEY
   ndx.settings.TWITTER_SECRET = process.env.TWITTER_SECRET or ndx.settings.TWITTER_SECRET
   ndx.settings.TWITTER_CALLBACK = process.env.TWITTER_CALLBACK or ndx.settings.TWITTER_CALLBACK
+  ndx.settings.TWITTER_SCOPE = process.env.TWITTER_SCOPE or ndx.settings.TWITTER_SCOPE or 'email'
   if ndx.settings.TWITTER_KEY
+    scopes = ndx.passport.splitScopes ndx.settings.TWITTER_SCOPE
     ndx.passport.use new TwitterStrategy
       consumerKey: ndx.settings.TWITTER_KEY
       consumerSecret: ndx.settings.TWITTER_SECRET
@@ -51,12 +53,11 @@ module.exports = (ndx) ->
             req.user._id
           ]
           return done null, req.user
-    ndx.app.get '/api/twitter', ndx.passport.authenticate('twitter', scope: 'email')
+    ndx.app.get '/api/twitter', ndx.passport.authenticate('twitter', scope: scopes)
     , ndx.postAuthenticate
     ndx.app.get '/api/twitter/callback', ndx.passport.authenticate('twitter')
     , ndx.postAuthenticate
-    ndx.app.get '/api/connect/twitter', ndx.passport.authorize('twitter',
-      scope: 'email')
+    ndx.app.get '/api/connect/twitter', ndx.passport.authorize('twitter', scope: scopes)
     ndx.app.get '/api/unlink/twitter', (req, res) ->
       user = req.user
       user.twitter.token = undefined
