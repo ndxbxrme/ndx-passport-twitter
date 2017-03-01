@@ -20,17 +20,23 @@
         return process.nextTick(function() {
           var newUser, users;
           if (!req.user) {
-            users = ndx.database.exec('SELECT * FROM ' + ndx.settings.USER_TABLE + ' WHERE twitter->id=?', [profile.id]);
+            users = ndx.database.select(ndx.settings.USER_TABLE, {
+              twitter: {
+                id: profile.id
+              }
+            });
             if (users && users.length) {
               if (!users[0].twitter.token) {
-                ndx.database.exec('UPDATE ' + ndx.settings.USER_TABLE + ' SET twitter=? WHERE _id=?', [
-                  {
+                ndx.database.update(ndx.settings.USER_TABLE, {
+                  twitter: {
                     id: profile.id,
                     token: token,
                     username: profile.username,
                     displayName: profile.displayName
-                  }, users[0]._id
-                ]);
+                  }
+                }, {
+                  _id: users[0]._id
+                });
                 return done(null, users[0]);
               }
               return done(null, users[0]);
@@ -44,18 +50,20 @@
                   displayName: profile.displayName
                 }
               };
-              ndx.database.exec('INSERT INTO ' + ndx.settings.USER_TABLE + ' VALUES ?', [newUser]);
+              ndx.database.insert(ndx.settings.USER_TABLE, newUser);
               return done(null, newUser);
             }
           } else {
-            ndx.database.exec('UPDATE ' + ndx.settings.USER_TABLE + ' SET twitter=? WHERE _id=?', [
-              {
+            ndx.database.update(ndx.settings.USER_TABLE, {
+              twitter: {
                 id: profile.id,
                 token: token,
                 username: profile.username,
                 displayName: profile.displayName
-              }, req.user._id
-            ]);
+              }
+            }, {
+              _id: req.user._id
+            });
             return done(null, req.user);
           }
         });

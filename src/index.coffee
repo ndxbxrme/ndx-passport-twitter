@@ -18,18 +18,18 @@ module.exports = (ndx) ->
     , (req, token, tokenSecret, profile, done) ->
       process.nextTick ->
         if not req.user
-          users = ndx.database.exec 'SELECT * FROM ' + ndx.settings.USER_TABLE + ' WHERE twitter->id=?', [profile.id]
+          users = ndx.database.select ndx.settings.USER_TABLE,
+            twitter:
+              id: profile.id
           if users and users.length
             if not users[0].twitter.token
-              ndx.database.exec 'UPDATE ' + ndx.settings.USER_TABLE + ' SET twitter=? WHERE _id=?', [
-                {
+              ndx.database.update ndx.settings.USER_TABLE,
+                twitter:
                   id: profile.id
                   token: token
                   username: profile.username
                   displayName: profile.displayName
-                },
-                users[0]._id
-              ]
+              , _id:users[0]._id
               return done null, users[0]
             return done null, users[0]
           else
@@ -40,18 +40,16 @@ module.exports = (ndx) ->
                 token: token
                 username: profile.username
                 displayName: profile.displayName
-            ndx.database.exec 'INSERT INTO ' + ndx.settings.USER_TABLE + ' VALUES ?', [newUser]
+            ndx.database.insert ndx.settings.USER_TABLE, newUser
             return done null, newUser
         else
-          ndx.database.exec 'UPDATE ' + ndx.settings.USER_TABLE + ' SET twitter=? WHERE _id=?', [
-            {
+          ndx.database.update ndx.settings.USER_TABLE,
+            twitter:
               id: profile.id
               token: token
               username: profile.username
               displayName: profile.displayName
-            },
-            req.user._id
-          ]
+          , _id:req.user._id
           return done null, req.user
     ndx.app.get '/api/twitter', ndx.passport.authenticate('twitter', scope: scopes)
     , ndx.postAuthenticate
