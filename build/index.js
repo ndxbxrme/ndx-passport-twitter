@@ -18,41 +18,44 @@
         includeEmail: true
       }, function(req, token, tokenSecret, profile, done) {
         return process.nextTick(function() {
-          var newUser, users;
           if (!req.user) {
-            users = ndx.database.select(ndx.settings.USER_TABLE, {
-              twitter: {
-                id: profile.id
+            return ndx.database.select(ndx.settings.USER_TABLE, {
+              where: {
+                twitter: {
+                  id: profile.id
+                }
               }
-            });
-            if (users && users.length) {
-              if (!users[0].twitter.token) {
-                ndx.database.update(ndx.settings.USER_TABLE, {
+            }, function(users) {
+              var newUser;
+              if (users && users.length) {
+                if (!users[0].twitter.token) {
+                  ndx.database.update(ndx.settings.USER_TABLE, {
+                    twitter: {
+                      id: profile.id,
+                      token: token,
+                      username: profile.username,
+                      displayName: profile.displayName
+                    }
+                  }, {
+                    _id: users[0]._id
+                  });
+                  return done(null, users[0]);
+                }
+                return done(null, users[0]);
+              } else {
+                newUser = {
+                  _id: ObjectID.generate(),
                   twitter: {
                     id: profile.id,
                     token: token,
                     username: profile.username,
                     displayName: profile.displayName
                   }
-                }, {
-                  _id: users[0]._id
-                });
-                return done(null, users[0]);
+                };
+                ndx.database.insert(ndx.settings.USER_TABLE, newUser);
+                return done(null, newUser);
               }
-              return done(null, users[0]);
-            } else {
-              newUser = {
-                _id: ObjectID.generate(),
-                twitter: {
-                  id: profile.id,
-                  token: token,
-                  username: profile.username,
-                  displayName: profile.displayName
-                }
-              };
-              ndx.database.insert(ndx.settings.USER_TABLE, newUser);
-              return done(null, newUser);
-            }
+            });
           } else {
             ndx.database.update(ndx.settings.USER_TABLE, {
               twitter: {

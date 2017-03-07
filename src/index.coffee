@@ -18,30 +18,32 @@ module.exports = (ndx) ->
     , (req, token, tokenSecret, profile, done) ->
       process.nextTick ->
         if not req.user
-          users = ndx.database.select ndx.settings.USER_TABLE,
-            twitter:
-              id: profile.id
-          if users and users.length
-            if not users[0].twitter.token
-              ndx.database.update ndx.settings.USER_TABLE,
+          ndx.database.select ndx.settings.USER_TABLE,
+            where:
+              twitter:
+                id: profile.id
+          , (users) ->
+            if users and users.length
+              if not users[0].twitter.token
+                ndx.database.update ndx.settings.USER_TABLE,
+                  twitter:
+                    id: profile.id
+                    token: token
+                    username: profile.username
+                    displayName: profile.displayName
+                , _id:users[0]._id
+                return done null, users[0]
+              return done null, users[0]
+            else
+              newUser =
+                _id: ObjectID.generate()
                 twitter:
                   id: profile.id
                   token: token
                   username: profile.username
                   displayName: profile.displayName
-              , _id:users[0]._id
-              return done null, users[0]
-            return done null, users[0]
-          else
-            newUser =
-              _id: ObjectID.generate()
-              twitter:
-                id: profile.id
-                token: token
-                username: profile.username
-                displayName: profile.displayName
-            ndx.database.insert ndx.settings.USER_TABLE, newUser
-            return done null, newUser
+              ndx.database.insert ndx.settings.USER_TABLE, newUser
+              return done null, newUser
         else
           ndx.database.update ndx.settings.USER_TABLE,
             twitter:
