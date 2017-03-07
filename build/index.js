@@ -1,14 +1,30 @@
 (function() {
   'use strict';
+  var ObjectID, TwitterStrategy, objtrans;
+
+  TwitterStrategy = require('passport-twitter').Strategy;
+
+  ObjectID = require('bson-objectid');
+
+  objtrans = require('objtrans');
+
   module.exports = function(ndx) {
-    var ObjectID, TwitterStrategy, scopes;
-    TwitterStrategy = require('passport-twitter').Strategy;
-    ObjectID = require('bson-objectid');
+    var scopes;
     ndx.settings.TWITTER_KEY = process.env.TWITTER_KEY || ndx.settings.TWITTER_KEY;
     ndx.settings.TWITTER_SECRET = process.env.TWITTER_SECRET || ndx.settings.TWITTER_SECRET;
     ndx.settings.TWITTER_CALLBACK = process.env.TWITTER_CALLBACK || ndx.settings.TWITTER_CALLBACK;
     ndx.settings.TWITTER_SCOPE = process.env.TWITTER_SCOPE || ndx.settings.TWITTER_SCOPE || 'email';
     if (ndx.settings.TWITTER_KEY) {
+      if (!ndx.transforms.twitter) {
+        ndx.transforms.twitter = {
+          twitter: {
+            id: 'profile.id',
+            token: 'token',
+            username: 'profile.username',
+            displayName: 'profile.displayName'
+          }
+        };
+      }
       scopes = ndx.passport.splitScopes(ndx.settings.TWITTER_SCOPE);
       ndx.passport.use(new TwitterStrategy({
         consumerKey: ndx.settings.TWITTER_KEY,
@@ -18,6 +34,7 @@
         includeEmail: true
       }, function(req, token, tokenSecret, profile, done) {
         return process.nextTick(function() {
+          var updateUser;
           if (!req.user) {
             return ndx.database.select(ndx.settings.USER_TABLE, {
               where: {
@@ -26,45 +43,34 @@
                 }
               }
             }, function(users) {
-              var newUser;
+              var newUser, updateUser;
               if (users && users.length) {
                 if (!users[0].twitter.token) {
-                  ndx.database.update(ndx.settings.USER_TABLE, {
-                    twitter: {
-                      id: profile.id,
-                      token: token,
-                      username: profile.username,
-                      displayName: profile.displayName
-                    }
-                  }, {
+                  updateUser = objtrans({
+                    token: token,
+                    profile: profile
+                  }, ndx.transforms.twitter);
+                  ndx.database.update(ndx.settings.USER_TABLE, updateUser, {
                     _id: users[0]._id
                   });
                   return done(null, users[0]);
                 }
                 return done(null, users[0]);
               } else {
-                newUser = {
-                  _id: ObjectID.generate(),
-                  twitter: {
-                    id: profile.id,
-                    token: token,
-                    username: profile.username,
-                    displayName: profile.displayName
-                  }
-                };
+                newUser = objtrans({
+                  token: token,
+                  profile: profile
+                }, ndx.transforms.twitter);
                 ndx.database.insert(ndx.settings.USER_TABLE, newUser);
                 return done(null, newUser);
               }
             });
           } else {
-            ndx.database.update(ndx.settings.USER_TABLE, {
-              twitter: {
-                id: profile.id,
-                token: token,
-                username: profile.username,
-                displayName: profile.displayName
-              }
-            }, {
+            updateUser = objtrans({
+              token: token,
+              profile: profile
+            }, ndx.transforms.twitter);
+            ndx.database.update(ndx.settings.USER_TABLE, updateUser, {
               _id: req.user._id
             });
             return done(null, req.user);
