@@ -26,7 +26,7 @@ module.exports = (ndx) ->
       includeEmail: true
     , (req, token, tokenSecret, profile, done) ->
       process.nextTick ->
-        if not req.user
+        if not ndx.user
           ndx.database.select ndx.settings.USER_TABLE,
             where:
               twitter:
@@ -57,16 +57,16 @@ module.exports = (ndx) ->
             profile: profile
           , ndx.transforms.twitter
           where = {}
-          where[ndx.settings.AUTO_ID] = req.user[ndx.settings.AUTO_ID]
+          where[ndx.settings.AUTO_ID] = ndx.user[ndx.settings.AUTO_ID]
           ndx.database.update ndx.settings.USER_TABLE, updateUser, where
-          return done null, req.user
+          return done null, ndx.user
     ndx.app.get '/api/twitter', ndx.passport.authenticate('twitter', scope: scopes)
     , ndx.postAuthenticate
     ndx.app.get '/api/twitter/callback', ndx.passport.authenticate('twitter')
     , ndx.postAuthenticate
     ndx.app.get '/api/connect/twitter', ndx.passport.authorize('twitter', scope: scopes)
     ndx.app.get '/api/unlink/twitter', (req, res) ->
-      user = req.user
+      user = ndx.user
       user.twitter.token = undefined
       user.save (err) ->
         res.redirect '/profile'
