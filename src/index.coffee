@@ -40,7 +40,7 @@ module.exports = (ndx) ->
                 , ndx.transforms.twitter
                 where = {}
                 where[ndx.settings.AUTO_ID] = users[0][ndx.settings.AUTO_ID]
-                ndx.database.update ndx.settings.USER_TABLE, updateUser, where
+                ndx.database.update ndx.settings.USER_TABLE, updateUser, where, null, true
                 ndx.user = users[0]
                 return done null, users[0]
               ndx.user = users[0]
@@ -51,9 +51,10 @@ module.exports = (ndx) ->
                 profile: profile
               , ndx.transforms.twitter
               newUser[ndx.settings.AUTO_ID] = ObjectID.generate()
-              ndx.database.insert ndx.settings.USER_TABLE, newUser
+              ndx.database.insert ndx.settings.USER_TABLE, newUser, null, true
               ndx.user = newUser
               return done null, newUser
+          , true
         else
           updateUser = objtrans
             token: token
@@ -61,7 +62,7 @@ module.exports = (ndx) ->
           , ndx.transforms.twitter
           where = {}
           where[ndx.settings.AUTO_ID] = ndx.user[ndx.settings.AUTO_ID]
-          ndx.database.update ndx.settings.USER_TABLE, updateUser, where
+          ndx.database.update ndx.settings.USER_TABLE, updateUser, where, null, true
           return done null, ndx.user
     ndx.app.get '/api/twitter', ndx.passport.authenticate('twitter', scope: scopes)
     , ndx.postAuthenticate
